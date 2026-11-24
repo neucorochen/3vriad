@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bubble-chan Match-3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Лёгкий векторный фон Frutiger Aero -->
+  <div class="aero-bg" aria-hidden="true">
+    <svg class="aero-scene" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1ca6f2" />
+          <stop offset="52%" stop-color="#69d2ff" />
+          <stop offset="100%" stop-color="#d7f6ff" />
+        </linearGradient>
+        <radialGradient id="sunGlow" cx="15%" cy="15%" r="35%">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+          <stop offset="40%" stop-color="#d9f7ff" stop-opacity="0.45" />
+          <stop offset="100%" stop-color="#69d2ff" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="towerGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8be1ff" />
+          <stop offset="35%" stop-color="#c9f3ff" />
+          <stop offset="65%" stop-color="#4bb8f0" />
+          <stop offset="100%" stop-color="#1e7fc2" />
+        </linearGradient>
+        <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6be02b" />
+          <stop offset="100%" stop-color="#2ea316" />
+        </linearGradient>
+        <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8cf22e" />
+          <stop offset="100%" stop-color="#35b812" />
+        </linearGradient>
+        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6de0ff" />
+          <stop offset="50%" stop-color="#2ca8e8" />
+          <stop offset="100%" stop-color="#127cc4" />
+        </linearGradient>
+      </defs>
+
+      <rect width="1440" height="900" fill="url(#skyGrad)" />
+      <rect width="1440" height="900" fill="url(#sunGlow)" />
+
+      <!-- Облака -->
+      <g fill="#ffffff" opacity="0.82">
+        <ellipse cx="260" cy="145" rx="135" ry="38" />
+        <ellipse cx="330" cy="128" rx="85" ry="34" />
+        <ellipse cx="830" cy="70" rx="145" ry="34" />
+        <ellipse cx="1290" cy="88" rx="150" ry="44" />
+        <ellipse cx="1210" cy="112" rx="95" ry="30" />
+      </g>
+
+      <!-- Футуристичные глянцевые башни справа -->
+      <g opacity="0.92">
+        <path d="M1050 670 L1075 180 Q1115 160 1150 180 L1175 670 Z" fill="url(#towerGrad)" />
+        <path d="M1185 670 L1198 370 Q1218 358 1236 370 L1248 670 Z" fill="url(#towerGrad)" opacity="0.88" />
+        <path d="M1260 670 L1284 260 L1305 670 Z" fill="url(#towerGrad)" opacity="0.85" />
+      </g>
+
+      <!-- Вода слева -->
+      <rect x="0" y="640" width="660" height="260" fill="url(#waterGrad)" />
+      <g fill="#ffffff" opacity="0.32">
+        <ellipse cx="160" cy="710" rx="115" ry="7" />
+        <ellipse cx="290" cy="745" rx="90" ry="5" />
+        <ellipse cx="120" cy="790" rx="135" ry="6" />
+      </g>
+
+      <!-- Зелёные холмы -->
+      <path d="M0 650 Q260 580 560 635 T1440 605 L1440 900 L0 900 Z" fill="url(#hillBack)" />
+      <path d="M0 845 Q420 770 860 725 T1440 655 L1440 900 L0 900 Z" fill="url(#hillFront)" />
+    </svg>
+
+    <!-- Лёгкие парящие пузыри -->
+    <div class="bg-bubble b1"></div>
+    <div class="bg-bubble b2"></div>
+    <div class="bg-bubble b3"></div>
+    <div class="bg-bubble b4"></div>
+    <div class="bg-bubble b5"></div>
+  </div>
+
+  <!-- Главное окно Windows Aero -->
+  <main class="aero-window">
+    <header class="window-header">
+      <div class="window-title">
+        <span class="title-dot"></span>
+        <h1>Bubble-chan Match-3</h1>
+      </div>
+
+      <div class="window-right">
+        <div class="mode-pill">
+          <span class="pill-led"></span>
+          <span>бесконечный режим</span>
+        </div>
+        <div class="win-controls" aria-hidden="true">
+          <span class="win-btn min"></span>
+          <span class="win-btn max"></span>
+          <span class="win-btn close"></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="window-body">
+      <!-- Игровое поле -->
+      <section class="board-stage">
+        <div class="board-frame">
+          <canvas id="gameCanvas" width="480" height="480"></canvas>
+          <div id="floatingLayer" class="floating-layer" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- Боковая панель (на телефоне превращается в компактные плашки) -->
+      <aside class="sidebar">
+        <div class="glass-card stats-card">
+          <div class="card-title">статистика</div>
+          <div class="stat-row">
+            <span>очки</span>
+            <strong id="scoreVal">0</strong>
+          </div>
+          <div class="stat-row">
+            <span>рекорд</span>
+            <strong id="bestVal">0</strong>
+          </div>
+          <div class="stat-row">
+            <span>комбо</span>
+            <strong id="comboVal">x1</strong>
+          </div>
+        </div>
+
+        <div class="glass-card energy-card">
+          <div class="card-title">шкала комбо</div>
+          <div class="progress-track">
+            <div id="comboBar" class="progress-fill"></div>
+          </div>
+          <button id="hintBtn" class="jelly-btn lime-btn" type="button">
+            ✨ подсказка
+          </button>
+        </div>
+
+        <div class="glass-card controls-card">
+          <div class="card-title">управление</div>
+          <div class="btn-group">
+            <button id="musicBtn" class="jelly-btn aqua-btn" type="button">
+              🎵 музыка: выкл
+            </button>
+            <button id="restartBtn" class="jelly-btn aqua-btn" type="button">
+              🔄 начать заново
+            </button>
+          </div>
+          <p class="controls-hint">
+            свайп или клик — поменять шары<br />
+            4 в ряд — линейная сфера · 5 — радужный шар
+          </p>
+        </div>
+
+        <!-- Маскот с репликами -->
+        <div class="mascot-zone">
+          <div id="mascotBubble" class="speech-bubble" role="status" aria-live="polite">
+            Собери 3 желейных шара!
+          </div>
+          <img
+            id="mascotImg"
+            src="mascot.png"
+            alt="Bubble-chan маскот"
+            class="mascot-img"
+            onerror="this.style.display='none'"
+          />
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="storage.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1052,7 +1052,7 @@
     updateMusicBtn();
   });
 
-  // ===== ИГРОВОЙ ЦИКЛ =====
+ // ===== ИГРОВОЙ ЦИКЛ =====
   function update(dt) {
     elapsedTime += dt;
 
@@ -1061,7 +1061,7 @@
       if (hintTimer <= 0) hintPair = null;
     }
 
-    // Таймер серии комбо (тихо убывает, пока игрок думает над ходом)
+    // Таймер серии комбо
     if (combo > 0 && state === 'IDLE') {
       comboTimeLeft -= dt;
       if (comboTimeLeft <= 0) {
@@ -1071,29 +1071,84 @@
       updateHUD();
     }
 
+    // 1. Пружинная желейная физика всех десертов
     const stiffness = 260;
     const damping = 12;
-    let anyMoving = false;
-
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         const gem = board[r][c];
-        if (!gem) continue;
+        if (!gem || gem.popping) continue;
 
-        if (!gem.popping) {
-          gem.velSX += (1 - gem.scaleX) * stiffness * dt;
-          gem.velSY += (1 - gem.scaleY) * stiffness * dt;
-          gem.velSX *= Math.max(0, 1 - damping * dt);
-          gem.velSY *= Math.max(0, 1 - damping * dt);
-          gem.scaleX += gem.velSX * dt;
-          gem.scaleY += gem.velSY * dt;
+        gem.velSX += (1 - gem.scaleX) * stiffness * dt;
+        gem.velSY += (1 - gem.scaleY) * stiffness * dt;
+        gem.velSX *= Math.max(0, 1 - damping * dt);
+        gem.velSY *= Math.max(0, 1 - damping * dt);
+        gem.scaleX += gem.velSX * dt;
+        gem.scaleY += gem.velSY * dt;
 
-          gem.velRot += (0 - gem.rot) * 180 * dt;
-          gem.velRot *= Math.max(0, 1 - 10 * dt);
-          gem.rot += gem.velRot * dt;
+        gem.velRot += (0 - gem.rot) * 180 * dt;
+        gem.velRot *= Math.max(0, 1 - 10 * dt);
+        gem.rot += gem.velRot * dt;
+      }
+    }
+
+    // 2. Машина состояний (строго одно состояние за кадр)
+    if (state === 'SWAPPING' || state === 'REVERTING') {
+      if (swapData) {
+        swapData.t += dt / swapData.duration;
+        const p = Math.min(1, swapData.t);
+        const ease = 1 - Math.pow(1 - p, 3);
+
+        const x1 = swapData.c1 * cellPx + cellPx / 2;
+        const y1 = swapData.r1 * cellPx + cellPx / 2;
+        const x2 = swapData.c2 * cellPx + cellPx / 2;
+        const y2 = swapData.r2 * cellPx + cellPx / 2;
+
+        if (state === 'SWAPPING') {
+          swapData.g1.x = x1 + (x2 - x1) * ease;
+          swapData.g1.y = y1 + (y2 - y1) * ease;
+          swapData.g2.x = x2 + (x1 - x2) * ease;
+          swapData.g2.y = y2 + (y1 - y2) * ease;
+          if (p >= 1) finishSwap();
+        } else {
+          swapData.g1.x = x2 + (x1 - x2) * ease;
+          swapData.g1.y = y2 + (y1 - y2) * ease;
+          swapData.g2.x = x1 + (x2 - x1) * ease;
+          swapData.g2.y = y1 + (y2 - y1) * ease;
+          if (p >= 1) {
+            swapData.g1.x = x1; swapData.g1.y = y1;
+            swapData.g2.x = x2; swapData.g2.y = y2;
+            swapData = null;
+            state = 'IDLE';
+          }
         }
+      }
+    } else if (state === 'POPPING') {
+      if (popData) {
+        popData.t += dt / popData.duration;
+        const p = Math.min(1, popData.t);
+        for (const gem of popData.gems) {
+          if (p < 0.45) {
+            const k = p / 0.45;
+            gem.scaleX = 1 + 0.28 * k;
+            gem.scaleY = 1 + 0.28 * k;
+            gem.alpha = 1;
+          } else {
+            const k = (p - 0.45) / 0.55;
+            gem.scaleX = 1.28 * (1 - k);
+            gem.scaleY = 1.28 * (1 - k);
+            gem.alpha = 1 - k;
+          }
+        }
+        if (p >= 1) finishPopGems();
+      }
+    } else if (state === 'FALLING') {
+      let anyMoving = false;
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const gem = board[r][c];
+          if (!gem) continue;
 
-        if (state === 'FALLING') {
           const targetX = c * cellPx + cellPx / 2;
           const targetY = r * cellPx + cellPx / 2;
           gem.x = targetX;
@@ -1101,7 +1156,6 @@
           if (gem.y < targetY) {
             gem.vy += 2200 * dt;
             gem.y += gem.vy * dt;
-
             gem.scaleX = 0.89;
             gem.scaleY = 1.13;
 
@@ -1113,68 +1167,24 @@
             } else {
               anyMoving = true;
             }
+          } else {
+            gem.y = targetY;
           }
         }
       }
-    }
 
-    if (state === 'POPPING' && popData) {
-      popData.t += dt / popData.duration;
-      const p = Math.min(1, popData.t);
-      for (const gem of popData.gems) {
-        if (p < 0.45) {
-          const k = p / 0.45;
-          gem.scaleX = 1 + 0.28 * k;
-          gem.scaleY = 1 + 0.28 * k;
-          gem.alpha = 1;
+      if (!anyMoving) {
+        const { matched, groups } = findMatches();
+        if (matched.length > 0) {
+          beginPopGems(matched, groups);
         } else {
-          const k = (p - 0.45) / 0.55;
-          gem.scaleX = 1.28 * (1 - k);
-          gem.scaleY = 1.28 * (1 - k);
-          gem.alpha = 1 - k;
-        }
-      }
-      if (p >= 1) finishPopGems();
-    }
-
-    if ((state === 'SWAPPING' || state === 'REVERTING') && swapData) {
-      swapData.t += dt / swapData.duration;
-      const p = Math.min(1, swapData.t);
-      const ease = 1 - Math.pow(1 - p, 3);
-
-      const x1 = swapData.c1 * cellPx + cellPx / 2;
-      const y1 = swapData.r1 * cellPx + cellPx / 2;
-      const x2 = swapData.c2 * cellPx + cellPx / 2;
-      const y2 = swapData.r2 * cellPx + cellPx / 2;
-
-      if (state === 'SWAPPING') {
-        swapData.g1.x = x1 + (x2 - x1) * ease;
-        swapData.g1.y = y1 + (y2 - y1) * ease;
-        swapData.g2.x = x2 + (x1 - x2) * ease;
-        swapData.g2.y = y2 + (y1 - y2) * ease;
-        if (p >= 1) finishSwap();
-      } else {
-        swapData.g1.x = x2 + (x1 - x2) * ease;
-        swapData.g1.y = y2 + (y1 - y2) * ease;
-        swapData.g2.x = x1 + (x2 - x1) * ease;
-        swapData.g2.y = y1 + (y2 - y1) * ease;
-        if (p >= 1) {
-          swapData = null;
           state = 'IDLE';
+          if (!findFirstValidMove()) shuffleBoard(true);
         }
       }
     }
 
-    if (state === 'FALLING' && !anyMoving) {
-      const { matched, groups } = findMatches();
-      if (matched.length > 0) {
-        beginPopGems(matched, groups);
-      } else {
-        state = 'IDLE';
-        if (!findFirstValidMove()) shuffleBoard(true);
-      }
-    }
-
+    // 3. Частицы, лучи и всплывающие очки
     for (let i = particles.length - 1; i >= 0; i--) {
       const pt = particles[i];
       pt.life -= dt;
@@ -1202,9 +1212,6 @@
       ft.y -= 48 * dt;
     }
   }
-
-  function draw() {
-    ctx.clearRect(0, 0, boardPx, boardPx);
 
     // Сетка
     for (let r = 0; r < GRID_SIZE; r++) {

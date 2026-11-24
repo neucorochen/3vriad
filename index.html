@@ -3,86 +3,107 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bubble-chan Match-3</title>
+  <title>Bubble-chan Sweet Match-3</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Лёгкий векторный фон Frutiger Aero -->
+  <!-- Анимированный сладкий фон Frutiger Aero -->
   <div class="aero-bg" aria-hidden="true">
+    <div class="sun-rays"></div>
+
     <svg class="aero-scene" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
       <defs>
-        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#1ca6f2" />
-          <stop offset="52%" stop-color="#69d2ff" />
-          <stop offset="100%" stop-color="#d7f6ff" />
+        <linearGradient id="sweetSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#22b5ff" />
+          <stop offset="48%" stop-color="#87e2ff" />
+          <stop offset="82%" stop-color="#ffe0f2" />
+          <stop offset="100%" stop-color="#fff4d9" />
         </linearGradient>
-        <radialGradient id="sunGlow" cx="15%" cy="15%" r="35%">
+
+        <radialGradient id="sunGlow" cx="14%" cy="14%" r="36%">
           <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
-          <stop offset="40%" stop-color="#d9f7ff" stop-opacity="0.45" />
-          <stop offset="100%" stop-color="#69d2ff" stop-opacity="0" />
+          <stop offset="45%" stop-color="#fff2cc" stop-opacity="0.45" />
+          <stop offset="100%" stop-color="#87e2ff" stop-opacity="0" />
         </radialGradient>
-        <linearGradient id="towerGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#8be1ff" />
-          <stop offset="35%" stop-color="#c9f3ff" />
-          <stop offset="65%" stop-color="#4bb8f0" />
-          <stop offset="100%" stop-color="#1e7fc2" />
+
+        <!-- Стеклянно-карамельные башни -->
+        <linearGradient id="candyTower1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#ffd4ec" />
+          <stop offset="35%" stop-color="#ffffff" />
+          <stop offset="68%" stop-color="#ff8ec7" />
+          <stop offset="100%" stop-color="#d44d94" />
         </linearGradient>
-        <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#6be02b" />
-          <stop offset="100%" stop-color="#2ea316" />
+        <linearGradient id="candyTower2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c4fff7" />
+          <stop offset="35%" stop-color="#ffffff" />
+          <stop offset="70%" stop-color="#4de0d1" />
+          <stop offset="100%" stop-color="#199e9b" />
         </linearGradient>
-        <linearGradient id="hillFront" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#8cf22e" />
-          <stop offset="100%" stop-color="#35b812" />
+
+        <!-- Мятно-кремовые холмы -->
+        <linearGradient id="mintHill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#80f7c8" />
+          <stop offset="100%" stop-color="#29bf8d" />
         </linearGradient>
-        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#6de0ff" />
-          <stop offset="50%" stop-color="#2ca8e8" />
-          <stop offset="100%" stop-color="#127cc4" />
+        <linearGradient id="limeHill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9cf752" />
+          <stop offset="100%" stop-color="#3bc427" />
+        </linearGradient>
+
+        <!-- Сиропное озеро -->
+        <linearGradient id="syrupLake" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8beeff" />
+          <stop offset="55%" stop-color="#3bc2f5" />
+          <stop offset="100%" stop-color="#1e8ed6" />
         </linearGradient>
       </defs>
 
-      <rect width="1440" height="900" fill="url(#skyGrad)" />
+      <rect width="1440" height="900" fill="url(#sweetSky)" />
       <rect width="1440" height="900" fill="url(#sunGlow)" />
 
-      <!-- Облака -->
-      <g fill="#ffffff" opacity="0.82">
-        <ellipse cx="260" cy="145" rx="135" ry="38" />
-        <ellipse cx="330" cy="128" rx="85" ry="34" />
-        <ellipse cx="830" cy="70" rx="145" ry="34" />
-        <ellipse cx="1290" cy="88" rx="150" ry="44" />
-        <ellipse cx="1210" cy="112" rx="95" ry="30" />
+      <!-- Плывущие облака-зефирки -->
+      <g class="cloud-group c-slow" fill="#ffffff" opacity="0.88">
+        <ellipse cx="250" cy="140" rx="135" ry="38" />
+        <ellipse cx="325" cy="122" rx="85" ry="34" />
+        <ellipse cx="195" cy="128" rx="68" ry="28" />
+      </g>
+      <g class="cloud-group c-fast" fill="#fff5fb" opacity="0.82">
+        <ellipse cx="920" cy="88" rx="145" ry="36" />
+        <ellipse cx="995" cy="76" rx="82" ry="30" />
+        <ellipse cx="1290" cy="125" rx="130" ry="38" />
       </g>
 
-      <!-- Футуристичные глянцевые башни справа -->
+      <!-- Глянцевые карамельные башни справа -->
       <g opacity="0.92">
-        <path d="M1050 670 L1075 180 Q1115 160 1150 180 L1175 670 Z" fill="url(#towerGrad)" />
-        <path d="M1185 670 L1198 370 Q1218 358 1236 370 L1248 670 Z" fill="url(#towerGrad)" opacity="0.88" />
-        <path d="M1260 670 L1284 260 L1305 670 Z" fill="url(#towerGrad)" opacity="0.85" />
+        <path d="M1055 680 L1080 190 Q1118 168 1152 190 L1176 680 Z" fill="url(#candyTower1)" />
+        <path d="M1186 680 L1200 365 Q1220 350 1238 365 L1250 680 Z" fill="url(#candyTower2)" opacity="0.9" />
+        <path d="M1264 680 L1288 265 L1310 680 Z" fill="url(#candyTower1)" opacity="0.84" />
       </g>
 
-      <!-- Вода слева -->
-      <rect x="0" y="640" width="660" height="260" fill="url(#waterGrad)" />
-      <g fill="#ffffff" opacity="0.32">
-        <ellipse cx="160" cy="710" rx="115" ry="7" />
-        <ellipse cx="290" cy="745" rx="90" ry="5" />
-        <ellipse cx="120" cy="790" rx="135" ry="6" />
+      <!-- Сиропное озеро слева -->
+      <rect x="0" y="640" width="680" height="260" fill="url(#syrupLake)" />
+      <g fill="#ffffff" opacity="0.38">
+        <ellipse cx="165" cy="708" rx="120" ry="7" />
+        <ellipse cx="305" cy="746" rx="92" ry="5" />
+        <ellipse cx="125" cy="792" rx="140" ry="6" />
       </g>
 
-      <!-- Зелёные холмы -->
-      <path d="M0 650 Q260 580 560 635 T1440 605 L1440 900 L0 900 Z" fill="url(#hillBack)" />
-      <path d="M0 845 Q420 770 860 725 T1440 655 L1440 900 L0 900 Z" fill="url(#hillFront)" />
+      <!-- Мятные и лаймовые холмы -->
+      <path d="M0 655 Q270 575 565 635 T1440 600 L1440 900 L0 900 Z" fill="url(#mintHill)" />
+      <path d="M0 845 Q430 765 860 720 T1440 655 L1440 900 L0 900 Z" fill="url(#limeHill)" />
     </svg>
 
-    <!-- Лёгкие парящие пузыри -->
-    <div class="bg-bubble b1"></div>
-    <div class="bg-bubble b2"></div>
-    <div class="bg-bubble b3"></div>
-    <div class="bg-bubble b4"></div>
-    <div class="bg-bubble b5"></div>
+    <!-- Парящие глянцевые пузыри и леденцы -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+    <div class="bg-orb orb-4"></div>
+    <div class="bg-candy candy-1"></div>
+    <div class="bg-candy candy-2"></div>
+    <div class="bg-candy candy-3"></div>
   </div>
 
   <!-- Главное окно Windows Aero -->
@@ -90,13 +111,13 @@
     <header class="window-header">
       <div class="window-title">
         <span class="title-dot"></span>
-        <h1>Bubble-chan Match-3</h1>
+        <h1>Bubble-chan Sweet Match-3</h1>
       </div>
 
       <div class="window-right">
         <div class="mode-pill">
           <span class="pill-led"></span>
-          <span>бесконечный режим</span>
+          <span>сладкий режим</span>
         </div>
         <div class="win-controls" aria-hidden="true">
           <span class="win-btn min"></span>
@@ -115,7 +136,7 @@
         </div>
       </section>
 
-      <!-- Боковая панель (на телефоне превращается в компактные плашки) -->
+      <!-- Боковая панель -->
       <aside class="sidebar">
         <div class="glass-card stats-card">
           <div class="card-title">статистика</div>
@@ -134,7 +155,7 @@
         </div>
 
         <div class="glass-card energy-card">
-          <div class="card-title">шкала комбо</div>
+          <div class="card-title">сладкое комбо</div>
           <div class="progress-track">
             <div id="comboBar" class="progress-fill"></div>
           </div>
@@ -154,15 +175,15 @@
             </button>
           </div>
           <p class="controls-hint">
-            свайп или клик — поменять шары<br />
-            4 в ряд — линейная сфера · 5 — радужный шар
+            свайп или клик — поменять десерты<br />
+            4 в ряд — сияющий десерт · 5 — радужный торт
           </p>
         </div>
 
         <!-- Маскот с репликами -->
         <div class="mascot-zone">
           <div id="mascotBubble" class="speech-bubble" role="status" aria-live="polite">
-            Собери 3 желейных шара!
+            Собери 3 вкусняшки в ряд!
           </div>
           <img
             id="mascotImg"

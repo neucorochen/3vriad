@@ -1,7 +1,7 @@
 (() => {
   const GRID_SIZE = 8;
   const GEM_TYPES = 6;
-  const COMBO_MAX_TIME = 6.0; // Секунд на поддержание серии комбо
+  const COMBO_MAX_TIME = 6.0;
   const MAX_PARTICLES = 65;
 
   const DESSERT_COLORS = [
@@ -96,13 +96,11 @@
     const c = size / 2;
     const u = size / 100;
 
-    // Тень под десертом
     g.fillStyle = 'rgba(16, 78, 122, 0.22)';
     g.beginPath();
     g.ellipse(c, 85 * u, 31 * u, 8.5 * u, 0, 0, Math.PI * 2);
     g.fill();
 
-    // Сияющий ореол для бонусов
     if (mode === 'line' || mode === 'rainbow') {
       const aura = g.createRadialGradient(c, c, 10 * u, c, c, 48 * u);
       aura.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
@@ -128,7 +126,6 @@
       case 5: drawBerryTart(g, u); break;
     }
 
-    // Звёздочка-значок для бонуса 4-в-ряд
     if (mode === 'line') {
       g.save();
       g.translate(77 * u, 23 * u);
@@ -588,7 +585,6 @@
           (c >= 2 && board[r][c - 1].type === type && board[r][c - 2].type === type) ||
           (r >= 2 && board[r - 1][c].type === type && board[r - 2][c].type === type)
         );
-        // Начальное плавное падение сверху
         board[r][c] = createGem(r, c, type, r - GRID_SIZE - Math.random() * 1.2);
       }
     }
@@ -734,7 +730,6 @@
     g2.x = c1 * cellPx + cellPx / 2;
     g2.y = r1 * cellPx + cellPx / 2;
 
-    // Активация радужного тортика
     if (g1.special === 'rainbow' || g2.special === 'rainbow') {
       const targetType = g1.special === 'rainbow' ? g2.type : g1.type;
       const toClear = [g1, g2];
@@ -767,12 +762,10 @@
   }
 
   function beginPopGems(matched, groups, pivotGem = null) {
-    // Повышаем комбо и обновляем таймер серии
     combo = Math.min(10, combo + 1);
     comboTimeLeft = COMBO_MAX_TIME;
     state = 'POPPING';
 
-    // Безопасная очередь цепных взрывов бонусов (без зависаний)
     const finalClear = new Set(matched);
     const queue = [...matched];
     const triggeredSpecials = new Set();
@@ -781,7 +774,6 @@
       const gem = queue.shift();
       if (gem.special === 'line' && !triggeredSpecials.has(gem)) {
         triggeredSpecials.add(gem);
-        // Визуальный луч крестом
         beamEffects.push({ r: gem.r, c: gem.c, life: 0.28, maxLife: 0.28, color: DESSERT_COLORS[gem.type] });
 
         for (let i = 0; i < GRID_SIZE; i++) {
@@ -799,7 +791,6 @@
       }
     }
 
-    // Создаём новые бонусы за 4 или 5 в ряд
     const spawns = [];
     const usedSpawnCells = new Set();
     for (const group of groups) {
@@ -864,7 +855,6 @@
       }
     }
 
-    // Размещаем заработанные бонусы
     for (const sp of spawns) {
       const bonus = createGem(sp.r, sp.c, sp.type, sp.r, sp.special);
       squishGem(bonus, 1.38, 0.68, 4);
@@ -880,7 +870,6 @@
     for (let c = 0; c < GRID_SIZE; c++) {
       let writeRow = GRID_SIZE - 1;
 
-      // Опускаем существующие десерты вниз, сохраняя их текущий y для плавного падения
       for (let r = GRID_SIZE - 1; r >= 0; r--) {
         if (board[r][c]) {
           const gem = board[r][c];
@@ -894,7 +883,6 @@
         }
       }
 
-      // Новые десерты появляются строго над верхней границей поля и плавно падают
       const emptyCount = writeRow + 1;
       for (let r = writeRow; r >= 0; r--) {
         const type = Math.floor(Math.random() * GEM_TYPES);
@@ -947,7 +935,6 @@
       mascotImg.classList.remove('cheer');
       void mascotImg.offsetWidth;
       mascotImg.classList.add('cheer');
-      // Через 480мс возвращаем плавное парение
       cheerTimeout = setTimeout(() => {
         mascotImg.classList.remove('cheer');
       }, 480);
@@ -1052,7 +1039,7 @@
     updateMusicBtn();
   });
 
- // ===== ИГРОВОЙ ЦИКЛ =====
+  // ===== ИГРОВОЙ ЦИКЛ =====
   function update(dt) {
     elapsedTime += dt;
 
@@ -1061,7 +1048,6 @@
       if (hintTimer <= 0) hintPair = null;
     }
 
-    // Таймер серии комбо
     if (combo > 0 && state === 'IDLE') {
       comboTimeLeft -= dt;
       if (comboTimeLeft <= 0) {
@@ -1213,7 +1199,9 @@
     }
   }
 
-    // Сетка
+  function draw() {
+    ctx.clearRect(0, 0, boardPx, boardPx);
+
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         ctx.fillStyle = (r + c) % 2 === 0
@@ -1223,7 +1211,6 @@
       }
     }
 
-    // Лучи от линейного бонуса
     for (const b of beamEffects) {
       const alpha = Math.max(0, b.life / b.maxLife);
       ctx.save();
@@ -1237,7 +1224,6 @@
       ctx.restore();
     }
 
-    // Подсветка подсказки
     if (hintPair) {
       const pulse = 0.45 + 0.35 * Math.sin(elapsedTime * 8);
       ctx.fillStyle = `rgba(140, 245, 45, ${pulse})`;
@@ -1248,7 +1234,6 @@
       }
     }
 
-    // Подсветка выбранной клетки
     if (selected) {
       const pulse = 0.55 + 0.25 * Math.sin(elapsedTime * 7);
       ctx.strokeStyle = `rgba(255, 255, 255, ${pulse + 0.2})`;
@@ -1260,7 +1245,6 @@
       ctx.stroke();
     }
 
-    // Отрисовка десертов
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         const gem = board[r][c];
@@ -1290,7 +1274,6 @@
       }
     }
 
-    // Брызги глазури
     for (const pt of particles) {
       const alpha = Math.max(0, pt.life / pt.maxLife);
       ctx.globalAlpha = alpha;
@@ -1303,7 +1286,6 @@
       ctx.stroke();
     }
 
-    // Всплывающие очки
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `900 ${Math.max(16, Math.round(cellPx * 0.34))}px Nunito, sans-serif`;

@@ -1,0 +1,548 @@
+:root {
+  --aero-border: rgba(255, 255, 255, 0.85);
+  --aero-glass: rgba(215, 243, 255, 0.62);
+  --aero-card: rgba(255, 255, 255, 0.78);
+  --text-dark: #104568;
+  --text-muted: #2d6f96;
+  --shadow-soft: 0 18px 42px rgba(9, 76, 128, 0.34);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100dvh;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text-dark);
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  position: relative;
+}
+
+/* ===== ФОН FRUTIGER AERO ===== */
+.aero-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aero-scene {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bg-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 28%,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(205, 245, 255, 0.38) 38%,
+    rgba(105, 208, 255, 0.22) 72%,
+    rgba(255, 255, 255, 0.65) 100%
+  );
+  box-shadow:
+    inset -6px -8px 14px rgba(32, 145, 210, 0.28),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.85),
+    0 6px 18px rgba(14, 114, 178, 0.16);
+  will-change: transform;
+  animation: floatBubble 9s ease-in-out infinite;
+}
+
+.b1 { width: 110px; height: 110px; left: 5%; top: 18%; animation-delay: 0s; }
+.b2 { width: 72px; height: 72px; left: 8%; bottom: 8%; animation-delay: -2.5s; }
+.b3 { width: 125px; height: 125px; right: 7%; bottom: 6%; animation-delay: -4s; }
+.b4 { width: 92px; height: 92px; right: 11%; top: 27%; animation-delay: -1.5s; }
+.b5 { width: 58px; height: 58px; left: 72%; top: 4%; animation-delay: -5.5s; }
+
+@keyframes floatBubble {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -14px, 0) scale(1.03); }
+}
+
+/* ===== ГЛАВНОЕ ОКНО AERO ===== */
+.aero-window {
+  width: 100%;
+  max-width: 820px;
+  border-radius: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(220, 246, 255, 0.84) 0%,
+    rgba(182, 232, 252, 0.74) 100%
+  );
+  border: 2px solid var(--aero-border);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 2px 3px rgba(255, 255, 255, 0.95);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Шапка окна в стиле Vista/Win7 */
+.window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(165, 224, 252, 0.72) 48%,
+    rgba(105, 198, 245, 0.75) 52%,
+    rgba(166, 228, 255, 0.82) 100%
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+.window-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff, #7df22d 55%, #1c9c14 100%);
+  box-shadow: 0 0 8px rgba(107, 235, 45, 0.8);
+}
+
+.window-title h1 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #e9ff9c;
+  letter-spacing: 0.2px;
+  text-shadow:
+    -1.5px -1.5px 0 #145478,
+     1.5px -1.5px 0 #145478,
+    -1.5px  1.5px 0 #145478,
+     1.5px  1.5px 0 #145478,
+     0 3px 6px rgba(11, 70, 108, 0.45);
+}
+
+.window-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #11537a;
+  background: linear-gradient(180deg, #ffffff 0%, #d3f2ff 100%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 6px rgba(19, 104, 158, 0.2);
+}
+
+.pill-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #d9ff9e, #52d923);
+  box-shadow: 0 0 6px #52d923;
+}
+
+.win-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.win-btn {
+  width: 24px;
+  height: 17px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(145, 200, 232, 0.65));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.win-btn.close {
+  background: linear-gradient(180deg, #ff9f95 0%, #e04234 55%, #f06558 100%);
+}
+
+/* ===== ТЕЛО ОКНА ===== */
+.window-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 236px;
+  gap: 14px;
+  padding: 14px;
+  align-items: stretch;
+}
+
+/* Игровое поле */
+.board-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-frame {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  padding: 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(218, 246, 255, 0.78) 55%,
+    rgba(204, 247, 235, 0.82) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    inset 0 2px 12px rgba(45, 165, 224, 0.18),
+    0 6px 18px rgba(17, 102, 155, 0.16);
+}
+
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 11px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.floating-layer {
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 11px;
+}
+
+.score-pop {
+  position: absolute;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #ffffff;
+  text-shadow:
+    0 2px 4px rgba(10, 82, 130, 0.7),
+    0 0 8px rgba(90, 215, 255, 0.9);
+  transform: translate(-50%, -50%);
+  animation: scoreRise 0.85s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes scoreRise {
+  0% { opacity: 0; transform: translate(-50%, -20%) scale(0.7); }
+  25% { opacity: 1; transform: translate(-50%, -55%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -135%) scale(0.95); }
+}
+
+/* ===== БОКОВАЯ ПАНЕЛЬ ===== */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.glass-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(232, 248, 255, 0.82) 100%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.96);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow:
+    0 4px 12px rgba(20, 104, 158, 0.12),
+    inset 0 1px 2px rgba(255, 255, 255, 1);
+}
+
+.card-title {
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: lowercase;
+  color: #165e8a;
+  margin-bottom: 6px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.stat-row:last-child {
+  margin-bottom: 0;
+}
+
+.stat-row strong {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #0e4466;
+}
+
+/* Шкала комбо */
+.progress-track {
+  width: 100%;
+  height: 11px;
+  border-radius: 999px;
+  background: rgba(164, 214, 240, 0.45);
+  border: 1px solid rgba(115, 184, 224, 0.55);
+  overflow: hidden;
+  margin-bottom: 9px;
+  box-shadow: inset 0 2px 4px rgba(17, 94, 145, 0.18);
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7ef224 0%, #37d4ff 100%);
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.7);
+  transition: width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ===== ЖЕЛЕЙНЫЕ КНОПКИ FRUTIGER AERO ===== */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.jelly-btn {
+  position: relative;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.18s ease;
+  will-change: transform;
+}
+
+/* Верхний стеклянный блик на кнопке */
+.jelly-btn::before {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 2px;
+  height: 46%;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.18) 100%
+  );
+  pointer-events: none;
+}
+
+.jelly-btn:hover {
+  transform: scale(1.03, 0.98);
+  filter: brightness(1.05);
+}
+
+.jelly-btn:active {
+  transform: scale(1.09, 0.86);
+}
+
+.lime-btn {
+  color: #164f07;
+  background: linear-gradient(180deg, #c6ff6b 0%, #7de01d 52%, #59c40c 100%);
+  box-shadow:
+    0 4px 10px rgba(72, 179, 14, 0.35),
+    inset 0 -3px 6px rgba(34, 115, 4, 0.25);
+}
+
+.aqua-btn {
+  color: #114c70;
+  background: linear-gradient(180deg, #f5fcff 0%, #cceeff 54%, #a6dfff 100%);
+  box-shadow:
+    0 3px 9px rgba(27, 126, 186, 0.22),
+    inset 0 -2px 5px rgba(30, 126, 186, 0.18);
+}
+
+.controls-hint {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #3a779c;
+}
+
+/* ===== МАСКОТ ===== */
+.mascot-zone {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.speech-bubble {
+  position: relative;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  color: #104d73;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid #9adbf7;
+  box-shadow: 0 4px 10px rgba(17, 108, 166, 0.15);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.speech-bubble.pop {
+  transform: scale(1.06);
+}
+
+.mascot-img {
+  width: 112px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 6px 10px rgba(16, 94, 148, 0.25));
+  animation: mascotFloat 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.mascot-img.cheer {
+  animation: mascotCheer 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes mascotFloat {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
+}
+
+@keyframes mascotCheer {
+  0% { transform: scale(1, 1); }
+  35% { transform: scale(1.12, 0.88) translateY(4px); }
+  70% { transform: scale(0.94, 1.08) translateY(-10px); }
+  100% { transform: scale(1, 1); }
+}
+
+/* ===== ОПТИМИЗАЦИЯ ДЛЯ ТЕЛЕФОНОВ ===== */
+@media (max-width: 768px) {
+  body {
+    padding: 6px;
+    align-items: flex-start;
+  }
+
+  /* Убираем тяжёлый blur на мобильных GPU */
+  .aero-window {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(212, 243, 255, 0.92);
+    border-radius: 14px;
+  }
+
+  .bg-bubble {
+    display: none;
+  }
+
+  .window-header {
+    padding: 8px 10px;
+  }
+
+  .window-title h1 {
+    font-size: 1.02rem;
+  }
+
+  .mode-pill,
+  .win-controls {
+    display: none;
+  }
+
+  .window-body {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .board-frame {
+    padding: 5px;
+    border-radius: 13px;
+  }
+
+  .sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .glass-card {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .stats-card {
+    grid-column: 1 / 2;
+  }
+
+  .energy-card {
+    grid-column: 2 / 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .controls-card {
+    grid-column: 1 / 3;
+  }
+
+  .btn-group {
+    flex-direction: row;
+  }
+
+  .controls-hint {
+    display: none;
+  }
+
+  .mascot-zone {
+    grid-column: 1 / 3;
+    flex-direction: row-reverse;
+    justify-content: center;
+    padding: 2px 4px;
+    gap: 10px;
+  }
+
+  .mascot-img {
+    width: 68px;
+    flex-shrink: 0;
+  }
+
+  .speech-bubble {
+    text-align: left;
+    font-size: 0.76rem;
+  }
+}

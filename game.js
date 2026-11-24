@@ -1,8 +1,9 @@
 (() => {
   const GRID_SIZE = 8;
   const GEM_TYPES = 6;
+  const COMBO_MAX_TIME = 6.0; // Секунд на поддержание серии комбо
+  const MAX_PARTICLES = 65;
 
-  // Цвета брызг-глазури для каждого десерта
   const DESSERT_COLORS = [
     '#ff6bb5', // 0: Клубничный кекс
     '#34f0c8', // 1: Мятный пончик
@@ -15,17 +16,21 @@
   const MASCOT_LINES = {
     idle: [
       'Собери 3 вкусняшки в ряд!',
-      'Кексики и тортики такие желейные!',
-      '4 в ряд дадут сияющий десерт!'
+      'Собирай быстро, чтобы держать комбо!',
+      '4 в ряд дадут сияющий бонус!'
     ],
     good: [
       'Вкуснотища! ✨',
       'Сладкое совпадение!',
       'Отличный кусочек!'
     ],
+    bonus: [
+      'Ура! Появился сладкий бонус! 🌟',
+      'Сияющий десерт на поле! ✨'
+    ],
     combo: [
       'ОГО, сладкое комбо!! 🍰',
-      'Вот это пир!! Продолжай!',
+      'Вот это серия!! Продолжай!',
       'Кондитерский рекорд близко!'
     ],
     shuffle: [
@@ -52,6 +57,7 @@
   // Состояние игры
   let board = [];
   let particles = [];
+  let beamEffects = [];
   let floatingTexts = [];
   let sprites = [];
   let specialSprites = [];
@@ -64,12 +70,15 @@
   let score = 0;
   let bestScore = Storage.getBestScore();
   let combo = 0;
+  let comboTimeLeft = 0;
+
   let state = 'IDLE'; // IDLE | SWAPPING | REVERTING | POPPING | FALLING
   let selected = null;
   let hintPair = null;
   let hintTimer = 0;
   let swapData = null;
   let popData = null;
+  let cheerTimeout = null;
 
   let pointerDown = false;
   let dragStartCell = null;
@@ -78,7 +87,7 @@
   let lastTime = 0;
   let elapsedTime = 0;
 
-  // ===== ДЕТАЛИЗИРОВАННЫЕ ЖЕЛЕЙНЫЕ ДЕСЕРТЫ (КЕШИРУЮТСЯ В СПРАЙТЫ) =====
+  // ===== РЕНДЕР ГЛЯНЦЕВЫХ ДЕСЕРТОВ В КЕШ =====
   function createDessertSprite(type, size, mode = 'normal') {
     const off = document.createElement('canvas');
     off.width = size;
@@ -87,17 +96,17 @@
     const c = size / 2;
     const u = size / 100;
 
-    // Мягкая тень под десертом
+    // Тень под десертом
     g.fillStyle = 'rgba(16, 78, 122, 0.22)';
     g.beginPath();
     g.ellipse(c, 85 * u, 31 * u, 8.5 * u, 0, 0, Math.PI * 2);
     g.fill();
 
-    // Сияющий ореол для спец-десертов
+    // Сияющий ореол для бонусов
     if (mode === 'line' || mode === 'rainbow') {
       const aura = g.createRadialGradient(c, c, 10 * u, c, c, 48 * u);
       aura.addColorStop(0, 'rgba(255, 255, 255, 0.96)');
-      aura.addColorStop(0.65, mode === 'rainbow' ? 'rgba(255, 160, 230, 0.55)' : 'rgba(120, 235, 255, 0.5)');
+      aura.addColorStop(0.65, mode === 'rainbow' ? 'rgba(255, 145, 225, 0.6)' : 'rgba(100, 230, 255, 0.58)');
       aura.addColorStop(1, 'rgba(255, 255, 255, 0)');
       g.fillStyle = aura;
       g.beginPath();
@@ -119,12 +128,12 @@
       case 5: drawBerryTart(g, u); break;
     }
 
-    // Искорка-значок для 4-в-ряд
+    // Звёздочка-значок для бонуса 4-в-ряд
     if (mode === 'line') {
       g.save();
       g.translate(77 * u, 23 * u);
       g.fillStyle = '#ffffff';
-      g.strokeStyle = '#18a8f5';
+      g.strokeStyle = '#149ef0';
       g.lineWidth = 2.6 * u;
       g.beginPath();
       for (let i = 0; i < 4; i++) {
@@ -141,9 +150,7 @@
     return off;
   }
 
-  // 0. Клубничный желейный кекс
   function drawCupcake(g, u) {
-    // Рифлёный стаканчик
     const cupGrad = g.createLinearGradient(24 * u, 50 * u, 76 * u, 83 * u);
     cupGrad.addColorStop(0, '#ffa3d1');
     cupGrad.addColorStop(0.5, '#ff4d9e');
@@ -160,7 +167,6 @@
     g.lineWidth = 2 * u;
     g.stroke();
 
-    // Полоски на стаканчике
     g.strokeStyle = 'rgba(255, 255, 255, 0.45)';
     g.lineWidth = 2.4 * u;
     [36, 45, 55, 64].forEach((x) => {
@@ -170,14 +176,12 @@
       g.stroke();
     });
 
-    // Желейная кремовая шапочка (2 яруса)
     const creamGrad = g.createRadialGradient(40 * u, 30 * u, 5 * u, 50 * u, 44 * u, 34 * u);
     creamGrad.addColorStop(0, '#ffffff');
     creamGrad.addColorStop(0.42, '#ffd1ea');
     creamGrad.addColorStop(0.82, '#ff73b9');
     creamGrad.addColorStop(1, '#e03e90');
     g.fillStyle = creamGrad;
-
     g.beginPath();
     g.arc(32 * u, 48 * u, 14 * u, 0, Math.PI * 2);
     g.arc(68 * u, 48 * u, 14 * u, 0, Math.PI * 2);
@@ -185,13 +189,11 @@
     g.arc(50 * u, 35 * u, 16 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Глянцевый блик на креме
     g.fillStyle = 'rgba(255, 255, 255, 0.72)';
     g.beginPath();
     g.ellipse(41 * u, 36 * u, 11 * u, 5 * u, -0.35, 0, Math.PI * 2);
     g.fill();
 
-    // Посыпка на креме
     [[34, 47, '#fff275'], [64, 46, '#75f5ff'], [56, 39, '#ffffff']].forEach(([x, y, col]) => {
       g.fillStyle = col;
       g.beginPath();
@@ -199,7 +201,6 @@
       g.fill();
     });
 
-    // Глянцевая вишенка
     const cherryGrad = g.createRadialGradient(47 * u, 18 * u, 2 * u, 50 * u, 22 * u, 11 * u);
     cherryGrad.addColorStop(0, '#ffb8c9');
     cherryGrad.addColorStop(0.45, '#ff1752');
@@ -209,16 +210,13 @@
     g.arc(50 * u, 22 * u, 10 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Блик на вишенке
     g.fillStyle = 'rgba(255, 255, 255, 0.95)';
     g.beginPath();
     g.ellipse(46 * u, 18 * u, 3.8 * u, 2.2 * u, -0.5, 0, Math.PI * 2);
     g.fill();
   }
 
-  // 1. Мятный глянцевый пончик
   function drawMintDonut(g, u) {
-    // Румяное тесто
     const dough = g.createRadialGradient(44 * u, 46 * u, 12 * u, 50 * u, 52 * u, 36 * u);
     dough.addColorStop(0, '#ffe0a8');
     dough.addColorStop(0.75, '#eba85b');
@@ -228,7 +226,6 @@
     g.arc(50 * u, 52 * u, 35 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Желейная мятная глазурь
     const glaze = g.createRadialGradient(36 * u, 32 * u, 5 * u, 50 * u, 49 * u, 35 * u);
     glaze.addColorStop(0, '#e3fff8');
     glaze.addColorStop(0.42, '#40f5cf');
@@ -239,7 +236,6 @@
     g.arc(50 * u, 49 * u, 32.5 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Вырез в центре
     g.save();
     g.globalCompositeOperation = 'destination-out';
     g.beginPath();
@@ -247,14 +243,12 @@
     g.fill();
     g.restore();
 
-    // Внутренний глянцевый ободок
     g.strokeStyle = 'rgba(255, 255, 255, 0.75)';
     g.lineWidth = 2.2 * u;
     g.beginPath();
     g.arc(50 * u, 50 * u, 11.5 * u, 0, Math.PI * 2);
     g.stroke();
 
-    // Яркий стеклянный блик дугой
     g.strokeStyle = 'rgba(255, 255, 255, 0.88)';
     g.lineWidth = 5.5 * u;
     g.lineCap = 'round';
@@ -262,12 +256,10 @@
     g.arc(50 * u, 49 * u, 23 * u, -Math.PI * 0.84, -Math.PI * 0.24);
     g.stroke();
 
-    // Цветная глянцевая посыпка
-    const sprinkles = [
+    [
       [32, 36, '#ff5ca8', 0.4], [67, 36, '#ffe552', -0.5], [72, 57, '#ffffff', 0.8],
       [31, 61, '#ffe552', -0.3], [52, 72, '#ff5ca8', 0.2], [44, 27, '#ffffff', -0.2]
-    ];
-    sprinkles.forEach(([x, y, col, rot]) => {
+    ].forEach(([x, y, col, rot]) => {
       g.save();
       g.translate(x * u, y * u);
       g.rotate(rot);
@@ -279,9 +271,7 @@
     });
   }
 
-  // 2. Кусочек клубничного торта
   function drawCakeSlice(g, u) {
-    // Бисквит
     const sponge = g.createLinearGradient(18 * u, 42 * u, 82 * u, 82 * u);
     sponge.addColorStop(0, '#fff7cc');
     sponge.addColorStop(0.6, '#ffd885');
@@ -294,13 +284,11 @@
     g.lineWidth = 2 * u;
     g.stroke();
 
-    // Прослойка взбитых сливок и ягодного желе
     g.fillStyle = '#ffffff';
     g.fillRect(18 * u, 56 * u, 64 * u, 7.5 * u);
     g.fillStyle = '#ff3b6b';
     g.fillRect(18 * u, 62.5 * u, 64 * u, 4.5 * u);
 
-    // Верхняя глянцевая крышка с глазурью
     const topGrad = g.createLinearGradient(18 * u, 20 * u, 82 * u, 48 * u);
     topGrad.addColorStop(0, '#ffc2d4');
     topGrad.addColorStop(0.48, '#ff477e');
@@ -313,7 +301,6 @@
     g.closePath();
     g.fill();
 
-    // Желейные подтёки глазури
     g.beginPath();
     g.arc(27 * u, 46 * u, 6.5 * u, 0, Math.PI);
     g.arc(43 * u, 47 * u, 7.5 * u, 0, Math.PI);
@@ -321,13 +308,11 @@
     g.arc(75 * u, 45 * u, 5.5 * u, 0, Math.PI);
     g.fill();
 
-    // Блик на глазури
     g.fillStyle = 'rgba(255, 255, 255, 0.55)';
     g.beginPath();
     g.ellipse(42 * u, 35 * u, 13 * u, 4 * u, -0.35, 0, Math.PI * 2);
     g.fill();
 
-    // Глянцевая клубничка сверху
     const berryGrad = g.createRadialGradient(47 * u, 19 * u, 2 * u, 51 * u, 23 * u, 11 * u);
     berryGrad.addColorStop(0, '#ff9eb5');
     berryGrad.addColorStop(0.5, '#ff174e');
@@ -337,7 +322,6 @@
     g.arc(51 * u, 23 * u, 9.5 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Листик и блик
     g.fillStyle = '#4be03d';
     g.beginPath();
     g.ellipse(58 * u, 16 * u, 5.5 * u, 2.8 * u, -0.4, 0, Math.PI * 2);
@@ -348,14 +332,12 @@
     g.fill();
   }
 
-  // 3. Лавандовый желейный макарун
   function drawMacaron(g, u) {
     const shellGrad = g.createLinearGradient(16 * u, 22 * u, 84 * u, 78 * u);
     shellGrad.addColorStop(0, '#f7dbff');
     shellGrad.addColorStop(0.45, '#be63ff');
     shellGrad.addColorStop(1, '#6c18bf');
 
-    // Нижняя половинка
     g.fillStyle = shellGrad;
     g.beginPath();
     g.roundRect(15 * u, 56 * u, 70 * u, 23 * u, [5 * u, 5 * u, 20 * u, 20 * u]);
@@ -364,7 +346,6 @@
     g.lineWidth = 2 * u;
     g.stroke();
 
-    // Кремовая начинка с волнистым краем
     const cream = g.createLinearGradient(14 * u, 44 * u, 14 * u, 60 * u);
     cream.addColorStop(0, '#ffffff');
     cream.addColorStop(1, '#f2d9ff');
@@ -373,23 +354,19 @@
     g.roundRect(13 * u, 44 * u, 74 * u, 15 * u, 7.5 * u);
     g.fill();
 
-    // Верхняя половинка
     g.fillStyle = shellGrad;
     g.beginPath();
     g.roundRect(15 * u, 22 * u, 70 * u, 25 * u, [22 * u, 22 * u, 5 * u, 5 * u]);
     g.fill();
     g.stroke();
 
-    // Яркий стеклянный блик Frutiger Aero
     g.fillStyle = 'rgba(255, 255, 255, 0.85)';
     g.beginPath();
     g.ellipse(43 * u, 31 * u, 21 * u, 5.8 * u, -0.08, 0, Math.PI * 2);
     g.fill();
   }
 
-  // 4. Карамельный пудинг-желе
   function drawPudding(g, u) {
-    // Стеклянная тарелочка
     g.fillStyle = 'rgba(255, 255, 255, 0.94)';
     g.beginPath();
     g.ellipse(50 * u, 79 * u, 37 * u, 9.5 * u, 0, 0, Math.PI * 2);
@@ -398,7 +375,6 @@
     g.lineWidth = 2 * u;
     g.stroke();
 
-    // Полупрозрачное тело пудинга
     const bodyGrad = g.createRadialGradient(40 * u, 42 * u, 5 * u, 50 * u, 58 * u, 38 * u);
     bodyGrad.addColorStop(0, '#fffbd1');
     bodyGrad.addColorStop(0.5, '#ffcf40');
@@ -411,7 +387,6 @@
     g.closePath();
     g.fill();
 
-    // Глянцевая карамельная шапочка
     const carGrad = g.createLinearGradient(28 * u, 22 * u, 72 * u, 50 * u);
     carGrad.addColorStop(0, '#d9691a');
     carGrad.addColorStop(0.55, '#9e3b00');
@@ -425,7 +400,6 @@
     g.quadraticCurveTo(40 * u, 52 * u, 30 * u, 43 * u);
     g.fill();
 
-    // Два стеклянных блика
     g.fillStyle = 'rgba(255, 255, 255, 0.88)';
     g.beginPath();
     g.ellipse(41 * u, 32 * u, 10 * u, 4.2 * u, -0.42, 0, Math.PI * 2);
@@ -436,9 +410,7 @@
     g.fill();
   }
 
-  // 5. Черничное аква-пирожное
   function drawBerryTart(g, u) {
-    // Песочная корзиночка
     const tartGrad = g.createLinearGradient(19 * u, 52 * u, 81 * u, 81 * u);
     tartGrad.addColorStop(0, '#ffe6b3');
     tartGrad.addColorStop(0.6, '#e39e4b');
@@ -455,7 +427,6 @@
     g.lineWidth = 2 * u;
     g.stroke();
 
-    // Желейный аква-купол
     const domeGrad = g.createRadialGradient(38 * u, 32 * u, 4 * u, 50 * u, 48 * u, 33 * u);
     domeGrad.addColorStop(0, '#e3fbff');
     domeGrad.addColorStop(0.45, '#38c7ff');
@@ -467,7 +438,6 @@
     g.closePath();
     g.fill();
 
-    // Черничка сверху
     const blueGrad = g.createRadialGradient(47 * u, 21 * u, 2 * u, 50 * u, 24 * u, 9 * u);
     blueGrad.addColorStop(0, '#9eb8ff');
     blueGrad.addColorStop(0.5, '#2b50cc');
@@ -477,7 +447,6 @@
     g.arc(50 * u, 24 * u, 8.5 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Глянцевые блики
     g.fillStyle = 'rgba(255, 255, 255, 0.9)';
     g.beginPath();
     g.ellipse(38 * u, 37 * u, 12 * u, 4.8 * u, -0.5, 0, Math.PI * 2);
@@ -487,34 +456,29 @@
     g.fill();
   }
 
-  // Радужный тортик (за 5 в ряд)
   function drawRainbowCake(g, u) {
-    const layers = [
+    [
       { y: 65, h: 14, col: '#ff5ca8' },
       { y: 51, h: 14, col: '#ffbe3b' },
       { y: 37, h: 14, col: '#4be674' },
       { y: 24, h: 13, col: '#3bc4ff' }
-    ];
-    layers.forEach((l) => {
+    ].forEach((l) => {
       g.fillStyle = l.col;
       g.beginPath();
       g.roundRect(17 * u, l.y * u, 66 * u, l.h * u, 5 * u);
       g.fill();
     });
 
-    // Белый крем сверху
     g.fillStyle = '#ffffff';
     g.beginPath();
     g.roundRect(15 * u, 19 * u, 70 * u, 11 * u, 5.5 * u);
     g.fill();
 
-    // Сияющая звёздочка-топпер
     g.fillStyle = '#fff176';
     g.beginPath();
     g.arc(50 * u, 14 * u, 7.5 * u, 0, Math.PI * 2);
     g.fill();
 
-    // Стеклянный блик
     const gloss = g.createLinearGradient(17 * u, 19 * u, 83 * u, 79 * u);
     gloss.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
     gloss.addColorStop(0.5, 'rgba(255, 255, 255, 0.08)');
@@ -549,7 +513,7 @@
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         const gem = board[r]?.[c];
-        if (gem) {
+        if (gem && state === 'IDLE') {
           gem.x = c * cellPx + cellPx / 2;
           gem.y = r * cellPx + cellPx / 2;
         }
@@ -557,15 +521,15 @@
     }
   }
 
-  // ===== СОЗДАНИЕ ДЕСЕРТА С ЖЕЛЕЙНОЙ ФИЗИКОЙ =====
-  function createGem(r, c, type, startYOffset = 0, special = null) {
+  // ===== СОЗДАНИЕ ДЕСЕРТА =====
+  function createGem(r, c, type, startRow = r, special = null) {
     return {
       type,
       special,
       r,
       c,
       x: c * cellPx + cellPx / 2,
-      y: (r + startYOffset) * cellPx + cellPx / 2,
+      y: startRow * cellPx + cellPx / 2,
       vy: 0,
       scaleX: 1,
       scaleY: 1,
@@ -586,8 +550,7 @@
     if (rotImpulse) gem.velRot += rotImpulse;
   }
 
-  // Желейная волна по соседям
-  function jiggleNeighbors(r, c, strength = 0.14) {
+  function jiggleNeighbors(r, c, strength = 0.13) {
     const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
     for (const [dr, dc] of dirs) {
       const nr = r + dr;
@@ -601,13 +564,15 @@
     }
   }
 
-  // ===== ИНИЦИАЛИЗАЦИЯ И ЗАЩИТА ОТ ПУСТЫХ КЛЕТОК =====
+  // ===== ИНИЦИАЛИЗАЦИЯ ПОЛЯ =====
   function initBoard() {
     board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
     particles = [];
+    beamEffects = [];
     floatingTexts = [];
     score = 0;
     combo = 0;
+    comboTimeLeft = 0;
     selected = null;
     hintPair = null;
     swapData = null;
@@ -623,7 +588,8 @@
           (c >= 2 && board[r][c - 1].type === type && board[r][c - 2].type === type) ||
           (r >= 2 && board[r - 1][c].type === type && board[r - 2][c].type === type)
         );
-        board[r][c] = createGem(r, c, type, -GRID_SIZE * 0.4 - Math.random() * 1.4);
+        // Начальное плавное падение сверху
+        board[r][c] = createGem(r, c, type, r - GRID_SIZE - Math.random() * 1.2);
       }
     }
 
@@ -631,26 +597,6 @@
     state = 'FALLING';
     updateHUD();
     sayMascot('idle', false);
-  }
-
-  // Гарантирует отсутствие «дыр» и сбитых координат
-  function ensureBoardIntegrity() {
-    let hadNull = false;
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        const gem = board[r][c];
-        if (!gem) {
-          hadNull = true;
-        } else {
-          gem.r = r;
-          gem.c = c;
-          gem.x = c * cellPx + cellPx / 2;
-          gem.y = r * cellPx + cellPx / 2;
-          gem.vy = 0;
-        }
-      }
-    }
-    if (hadNull) applyGravity();
   }
 
   // ===== ПОИСК СОВПАДЕНИЙ =====
@@ -758,7 +704,7 @@
     }
   }
 
-  // ===== ОБМЕН И ПЛАВНОЕ ЖЕЛЕЙНОЕ ЛОПАНИЕ =====
+  // ===== ОБМЕН И ОБРАБОТКА БОНУСОВ =====
   function startSwap(c1, c2) {
     if (state !== 'IDLE') return;
     if (Math.abs(c1.r - c2.r) + Math.abs(c1.c - c2.c) !== 1) return;
@@ -769,12 +715,11 @@
 
     hintPair = null;
     selected = null;
-    combo = 0;
     AeroAudio.playSquish(1.05);
     squishGem(g1, 1.24, 0.78, 3.5);
     squishGem(g2, 0.78, 1.24, -3.5);
 
-    swapData = { g1, g2, r1: c1.r, c1: c1.c, r2: c2.r, c2: c2.c, t: 0, duration: 0.16 };
+    swapData = { g1, g2, r1: c1.r, c1: c1.c, r2: c2.r, c2: c2.c, t: 0, duration: 0.15 };
     state = 'SWAPPING';
   }
 
@@ -789,6 +734,7 @@
     g2.x = c1 * cellPx + cellPx / 2;
     g2.y = r1 * cellPx + cellPx / 2;
 
+    // Активация радужного тортика
     if (g1.special === 'rainbow' || g2.special === 'rainbow') {
       const targetType = g1.special === 'rainbow' ? g2.type : g1.type;
       const toClear = [g1, g2];
@@ -821,27 +767,54 @@
   }
 
   function beginPopGems(matched, groups, pivotGem = null) {
-    combo++;
+    // Повышаем комбо и обновляем таймер серии
+    combo = Math.min(10, combo + 1);
+    comboTimeLeft = COMBO_MAX_TIME;
     state = 'POPPING';
 
+    // Безопасная очередь цепных взрывов бонусов (без зависаний)
     const finalClear = new Set(matched);
-    for (const gem of matched) {
-      if (gem.special === 'line') {
+    const queue = [...matched];
+    const triggeredSpecials = new Set();
+
+    while (queue.length > 0) {
+      const gem = queue.shift();
+      if (gem.special === 'line' && !triggeredSpecials.has(gem)) {
+        triggeredSpecials.add(gem);
+        // Визуальный луч крестом
+        beamEffects.push({ r: gem.r, c: gem.c, life: 0.28, maxLife: 0.28, color: DESSERT_COLORS[gem.type] });
+
         for (let i = 0; i < GRID_SIZE; i++) {
-          if (board[gem.r][i]) finalClear.add(board[gem.r][i]);
-          if (board[i][gem.c]) finalClear.add(board[i][gem.c]);
+          const rowGem = board[gem.r][i];
+          if (rowGem && !finalClear.has(rowGem)) {
+            finalClear.add(rowGem);
+            queue.push(rowGem);
+          }
+          const colGem = board[i][gem.c];
+          if (colGem && !finalClear.has(colGem)) {
+            finalClear.add(colGem);
+            queue.push(colGem);
+          }
         }
       }
     }
 
+    // Создаём новые бонусы за 4 или 5 в ряд
     const spawns = [];
+    const usedSpawnCells = new Set();
     for (const group of groups) {
-      if (group.length >= 5) {
+      if (group.length >= 4) {
         const target = group.includes(pivotGem) ? pivotGem : group[Math.floor(group.length / 2)];
-        spawns.push({ r: target.r, c: target.c, type: target.type, special: 'rainbow' });
-      } else if (group.length === 4) {
-        const target = group.includes(pivotGem) ? pivotGem : group[1];
-        spawns.push({ r: target.r, c: target.c, type: target.type, special: 'line' });
+        const key = `${target.r},${target.c}`;
+        if (!usedSpawnCells.has(key)) {
+          usedSpawnCells.add(key);
+          spawns.push({
+            r: target.r,
+            c: target.c,
+            type: target.type,
+            special: group.length >= 5 ? 'rainbow' : 'line'
+          });
+        }
       }
     }
 
@@ -858,7 +831,7 @@
       gem.popping = true;
       avgX += gem.x;
       avgY += gem.y;
-      jiggleNeighbors(gem.r, gem.c, 0.12);
+      jiggleNeighbors(gem.r, gem.c, 0.11);
     }
     avgX /= clearedArr.length;
     avgY /= clearedArr.length;
@@ -871,18 +844,15 @@
       maxLife: 0.85
     });
 
-    if (combo >= 3 || clearedArr.length >= 5) {
+    if (spawns.length > 0) {
+      sayMascot('bonus', true);
+    } else if (combo >= 3 || clearedArr.length >= 5) {
       sayMascot('combo', true);
     } else if (clearedArr.length >= 4 || combo === 2) {
       sayMascot('good', true);
     }
 
-    popData = {
-      gems: clearedArr,
-      spawns,
-      t: 0,
-      duration: 0.16
-    };
+    popData = { gems: clearedArr, spawns, t: 0, duration: 0.16 };
   }
 
   function finishPopGems() {
@@ -894,8 +864,9 @@
       }
     }
 
+    // Размещаем заработанные бонусы
     for (const sp of spawns) {
-      const bonus = createGem(sp.r, sp.c, sp.type, 0, sp.special);
+      const bonus = createGem(sp.r, sp.c, sp.type, sp.r, sp.special);
       squishGem(bonus, 1.38, 0.68, 4);
       board[sp.r][sp.c] = bonus;
     }
@@ -904,9 +875,12 @@
     applyGravity();
   }
 
+  // ===== ПЛАВНОЕ ПАДЕНИЕ В ПУСТЫЕ ЯЧЕЙКИ =====
   function applyGravity() {
     for (let c = 0; c < GRID_SIZE; c++) {
       let writeRow = GRID_SIZE - 1;
+
+      // Опускаем существующие десерты вниз, сохраняя их текущий y для плавного падения
       for (let r = GRID_SIZE - 1; r >= 0; r--) {
         if (board[r][c]) {
           const gem = board[r][c];
@@ -914,19 +888,20 @@
             board[writeRow][c] = gem;
             board[r][c] = null;
             gem.r = writeRow;
-            gem.vy = Math.max(gem.vy, 160);
+            gem.vy = Math.max(gem.vy, 140);
           }
           writeRow--;
         }
       }
 
-      let spawnStep = 1;
+      // Новые десерты появляются строго над верхней границей поля и плавно падают
+      const emptyCount = writeRow + 1;
       for (let r = writeRow; r >= 0; r--) {
         const type = Math.floor(Math.random() * GEM_TYPES);
-        const gem = createGem(r, c, type, -(writeRow - r + spawnStep) * 1.08);
-        gem.vy = 180;
+        const startRow = r - emptyCount - 0.35;
+        const gem = createGem(r, c, type, startRow);
+        gem.vy = 160;
         board[r][c] = gem;
-        spawnStep += 0.22;
       }
     }
 
@@ -934,17 +909,18 @@
   }
 
   function spawnSplash(x, y, color) {
-    const count = 6;
+    if (particles.length >= MAX_PARTICLES) return;
+    const count = 5;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
-      const speed = 75 + Math.random() * 145;
+      const speed = 70 + Math.random() * 135;
       particles.push({
         x, y,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 40,
-        r: 3 + Math.random() * 4.5,
-        life: 0.42 + Math.random() * 0.2,
-        maxLife: 0.62,
+        vy: Math.sin(angle) * speed - 35,
+        r: 3 + Math.random() * 4,
+        life: 0.4 + Math.random() * 0.18,
+        maxLife: 0.58,
         color
       });
     }
@@ -954,7 +930,8 @@
     scoreEl.textContent = score;
     bestEl.textContent = bestScore;
     comboEl.textContent = `x${Math.max(1, combo)}`;
-    comboBarEl.style.width = `${Math.min(100, combo * 25)}%`;
+    const pct = combo > 0 ? Math.max(0, (comboTimeLeft / COMBO_MAX_TIME) * 100) : 0;
+    comboBarEl.style.width = `${pct}%`;
   }
 
   function sayMascot(category, animate = false) {
@@ -966,9 +943,14 @@
     mascotBubble.classList.add('pop');
 
     if (animate && mascotImg) {
+      if (cheerTimeout) clearTimeout(cheerTimeout);
       mascotImg.classList.remove('cheer');
       void mascotImg.offsetWidth;
       mascotImg.classList.add('cheer');
+      // Через 480мс возвращаем плавное парение
+      cheerTimeout = setTimeout(() => {
+        mascotImg.classList.remove('cheer');
+      }, 480);
     }
   }
 
@@ -1079,7 +1061,16 @@
       if (hintTimer <= 0) hintPair = null;
     }
 
-    // Упругая желейная пружина (масштаб + лёгкий наклон)
+    // Таймер серии комбо (тихо убывает, пока игрок думает над ходом)
+    if (combo > 0 && state === 'IDLE') {
+      comboTimeLeft -= dt;
+      if (comboTimeLeft <= 0) {
+        combo = 0;
+        comboTimeLeft = 0;
+      }
+      updateHUD();
+    }
+
     const stiffness = 260;
     const damping = 12;
     let anyMoving = false;
@@ -1108,7 +1099,7 @@
           gem.x = targetX;
 
           if (gem.y < targetY) {
-            gem.vy += 2400 * dt;
+            gem.vy += 2200 * dt;
             gem.y += gem.vy * dt;
 
             gem.scaleX = 0.89;
@@ -1116,7 +1107,7 @@
 
             if (gem.y >= targetY) {
               gem.y = targetY;
-              const impact = Math.min(0.32, gem.vy / 2300);
+              const impact = Math.min(0.3, gem.vy / 2200);
               gem.vy = 0;
               squishGem(gem, 1 + impact, 1 - impact * 0.88, (Math.random() - 0.5) * 3.5);
             } else {
@@ -1127,7 +1118,6 @@
       }
     }
 
-    // Анимация надувания и лопания
     if (state === 'POPPING' && popData) {
       popData.t += dt / popData.duration;
       const p = Math.min(1, popData.t);
@@ -1147,7 +1137,6 @@
       if (p >= 1) finishPopGems();
     }
 
-    // Анимация обмена
     if ((state === 'SWAPPING' || state === 'REVERTING') && swapData) {
       swapData.t += dt / swapData.duration;
       const p = Math.min(1, swapData.t);
@@ -1176,21 +1165,16 @@
       }
     }
 
-    // Завершение падения -> проверка каскадов и целостности
     if (state === 'FALLING' && !anyMoving) {
-      ensureBoardIntegrity();
-      if (state === 'FALLING') {
-        const { matched, groups } = findMatches();
-        if (matched.length > 0) {
-          beginPopGems(matched, groups);
-        } else {
-          state = 'IDLE';
-          if (!findFirstValidMove()) shuffleBoard(true);
-        }
+      const { matched, groups } = findMatches();
+      if (matched.length > 0) {
+        beginPopGems(matched, groups);
+      } else {
+        state = 'IDLE';
+        if (!findFirstValidMove()) shuffleBoard(true);
       }
     }
 
-    // Частицы
     for (let i = particles.length - 1; i >= 0; i--) {
       const pt = particles[i];
       pt.life -= dt;
@@ -1203,7 +1187,11 @@
       pt.y += pt.vy * dt;
     }
 
-    // Всплывающие очки на Canvas
+    for (let i = beamEffects.length - 1; i >= 0; i--) {
+      beamEffects[i].life -= dt;
+      if (beamEffects[i].life <= 0) beamEffects.splice(i, 1);
+    }
+
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
       const ft = floatingTexts[i];
       ft.life -= dt;
@@ -1218,7 +1206,7 @@
   function draw() {
     ctx.clearRect(0, 0, boardPx, boardPx);
 
-    // Стеклянная сетка
+    // Сетка
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         ctx.fillStyle = (r + c) % 2 === 0
@@ -1226,6 +1214,20 @@
           : 'rgba(195, 236, 255, 0.26)';
         ctx.fillRect(c * cellPx, r * cellPx, cellPx, cellPx);
       }
+    }
+
+    // Лучи от линейного бонуса
+    for (const b of beamEffects) {
+      const alpha = Math.max(0, b.life / b.maxLife);
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.fillStyle = b.color;
+      ctx.fillRect(0, b.r * cellPx + cellPx * 0.18, boardPx, cellPx * 0.64);
+      ctx.fillRect(b.c * cellPx + cellPx * 0.18, 0, cellPx * 0.64, boardPx);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, b.r * cellPx + cellPx * 0.36, boardPx, cellPx * 0.28);
+      ctx.fillRect(b.c * cellPx + cellPx * 0.36, 0, cellPx * 0.28, boardPx);
+      ctx.restore();
     }
 
     // Подсветка подсказки

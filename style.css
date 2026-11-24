@@ -1,10 +1,8 @@
 :root {
-  --aero-border: rgba(255, 255, 255, 0.85);
-  --aero-glass: rgba(215, 243, 255, 0.62);
-  --aero-card: rgba(255, 255, 255, 0.78);
+  --aero-border: rgba(255, 255, 255, 0.88);
   --text-dark: #104568;
   --text-muted: #2d6f96;
-  --shadow-soft: 0 18px 42px rgba(9, 76, 128, 0.34);
+  --shadow-soft: 0 18px 42px rgba(15, 76, 128, 0.32);
 }
 
 * {
@@ -32,7 +30,7 @@ body {
   position: relative;
 }
 
-/* ===== ФОН FRUTIGER AERO ===== */
+/* ===== АНИМИРОВАННЫЙ СЛАДКИЙ ФОН FRUTIGER AERO ===== */
 .aero-bg {
   position: fixed;
   inset: 0;
@@ -47,33 +45,122 @@ body {
   display: block;
 }
 
-.bg-bubble {
+/* Мягкие вращающиеся солнечные лучи */
+.sun-rays {
+  position: absolute;
+  left: -18vw;
+  top: -22vh;
+  width: 75vw;
+  height: 75vw;
+  max-width: 720px;
+  max-height: 720px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.16) 0deg 14deg,
+    rgba(255, 255, 255, 0) 14deg 30deg
+  );
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.9) 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.9) 0%, transparent 70%);
+  animation: spinRays 48s linear infinite;
+  will-change: transform;
+}
+
+@keyframes spinRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Плывущие облака-зефирки */
+.cloud-group {
+  will-change: transform;
+}
+
+.c-slow {
+  animation: driftCloud 22s ease-in-out infinite alternate;
+}
+
+.c-fast {
+  animation: driftCloud 16s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes driftCloud {
+  0% { transform: translate3d(-24px, 0, 0); }
+  100% { transform: translate3d(32px, -8px, 0); }
+}
+
+/* Глянцевые пузыри на фоне */
+.bg-orb {
   position: absolute;
   border-radius: 50%;
   background: radial-gradient(
     circle at 30% 28%,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(205, 245, 255, 0.38) 38%,
-    rgba(105, 208, 255, 0.22) 72%,
-    rgba(255, 255, 255, 0.65) 100%
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 224, 245, 0.42) 38%,
+    rgba(116, 224, 255, 0.25) 72%,
+    rgba(255, 255, 255, 0.72) 100%
   );
   box-shadow:
-    inset -6px -8px 14px rgba(32, 145, 210, 0.28),
-    inset 4px 4px 10px rgba(255, 255, 255, 0.85),
+    inset -6px -8px 14px rgba(255, 118, 190, 0.22),
+    inset 4px 4px 10px rgba(255, 255, 255, 0.9),
     0 6px 18px rgba(14, 114, 178, 0.16);
   will-change: transform;
-  animation: floatBubble 9s ease-in-out infinite;
+  animation: floatOrb 8.5s ease-in-out infinite;
 }
 
-.b1 { width: 110px; height: 110px; left: 5%; top: 18%; animation-delay: 0s; }
-.b2 { width: 72px; height: 72px; left: 8%; bottom: 8%; animation-delay: -2.5s; }
-.b3 { width: 125px; height: 125px; right: 7%; bottom: 6%; animation-delay: -4s; }
-.b4 { width: 92px; height: 92px; right: 11%; top: 27%; animation-delay: -1.5s; }
-.b5 { width: 58px; height: 58px; left: 72%; top: 4%; animation-delay: -5.5s; }
+.orb-1 { width: 108px; height: 108px; left: 4%; top: 18%; animation-delay: 0s; }
+.orb-2 { width: 70px; height: 70px; left: 9%; bottom: 10%; animation-delay: -2.2s; }
+.orb-3 { width: 122px; height: 122px; right: 6%; bottom: 7%; animation-delay: -4.1s; }
+.orb-4 { width: 88px; height: 88px; right: 10%; top: 24%; animation-delay: -1.4s; }
 
-@keyframes floatBubble {
+/* Парящие глянцевые леденцы-капсулы */
+.bg-candy {
+  position: absolute;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 6px 8px rgba(255, 255, 255, 0.75),
+    0 8px 18px rgba(18, 102, 160, 0.18);
+  will-change: transform;
+  animation: floatCandy 7s ease-in-out infinite;
+}
+
+.candy-1 {
+  width: 54px;
+  height: 28px;
+  left: 16%;
+  top: 70%;
+  background: linear-gradient(135deg, #ff99cc 0%, #ff5ca8 50%, #ffc2e2 100%);
+  animation-delay: -1s;
+}
+
+.candy-2 {
+  width: 46px;
+  height: 46px;
+  right: 17%;
+  top: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #ffffff 0%, #8effd0 45%, #24c997 100%);
+  animation-delay: -3.2s;
+}
+
+.candy-3 {
+  width: 58px;
+  height: 26px;
+  right: 18%;
+  bottom: 22%;
+  background: linear-gradient(135deg, #ffe680 0%, #ff9f43 55%, #ffd280 100%);
+  animation-delay: -4.8s;
+}
+
+@keyframes floatOrb {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(0, -14px, 0) scale(1.03); }
+  50% { transform: translate3d(0, -16px, 0) scale(1.04); }
+}
+
+@keyframes floatCandy {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-12deg); }
+  50% { transform: translate3d(0, -18px, 0) rotate(10deg); }
 }
 
 /* ===== ГЛАВНОЕ ОКНО AERO ===== */
@@ -83,8 +170,8 @@ body {
   border-radius: 18px;
   background: linear-gradient(
     180deg,
-    rgba(220, 246, 255, 0.84) 0%,
-    rgba(182, 232, 252, 0.74) 100%
+    rgba(228, 248, 255, 0.86) 0%,
+    rgba(205, 238, 255, 0.76) 100%
   );
   border: 2px solid var(--aero-border);
   box-shadow:
@@ -95,7 +182,6 @@ body {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Шапка окна в стиле Vista/Win7 */
 .window-header {
   display: flex;
   align-items: center;
@@ -104,12 +190,12 @@ body {
   padding: 10px 14px;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(165, 224, 252, 0.72) 48%,
-    rgba(105, 198, 245, 0.75) 52%,
-    rgba(166, 228, 255, 0.82) 100%
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(176, 228, 255, 0.76) 48%,
+    rgba(118, 204, 248, 0.78) 52%,
+    rgba(184, 234, 255, 0.85) 100%
   );
-  border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .window-title {
@@ -122,14 +208,14 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffffff, #7df22d 55%, #1c9c14 100%);
-  box-shadow: 0 0 8px rgba(107, 235, 45, 0.8);
+  background: radial-gradient(circle at 35% 30%, #ffffff, #ff85c0 55%, #d62d81 100%);
+  box-shadow: 0 0 8px rgba(255, 110, 180, 0.8);
 }
 
 .window-title h1 {
-  font-size: 1.25rem;
+  font-size: 1.22rem;
   font-weight: 900;
-  color: #e9ff9c;
+  color: #fff2a8;
   letter-spacing: 0.2px;
   text-shadow:
     -1.5px -1.5px 0 #145478,
@@ -154,17 +240,17 @@ body {
   font-size: 0.78rem;
   font-weight: 800;
   color: #11537a;
-  background: linear-gradient(180deg, #ffffff 0%, #d3f2ff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffe6f4 100%);
   border: 1px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 2px 6px rgba(19, 104, 158, 0.2);
+  box-shadow: 0 2px 6px rgba(19, 104, 158, 0.18);
 }
 
 .pill-led {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #d9ff9e, #52d923);
-  box-shadow: 0 0 6px #52d923;
+  background: radial-gradient(circle at 30% 30%, #ffd4eb, #ff4fa3);
+  box-shadow: 0 0 6px #ff4fa3;
 }
 
 .win-controls {
@@ -194,7 +280,6 @@ body {
   align-items: stretch;
 }
 
-/* Игровое поле */
 .board-stage {
   display: flex;
   align-items: center;
@@ -210,14 +295,14 @@ body {
   padding: 8px;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(218, 246, 255, 0.78) 55%,
-    rgba(204, 247, 235, 0.82) 100%
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(232, 248, 255, 0.82) 55%,
+    rgba(255, 235, 246, 0.85) 100%
   );
-  border: 2px solid rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(255, 255, 255, 0.96);
   box-shadow:
-    inset 0 2px 12px rgba(45, 165, 224, 0.18),
-    0 6px 18px rgba(17, 102, 155, 0.16);
+    inset 0 2px 12px rgba(45, 165, 224, 0.16),
+    0 6px 18px rgba(17, 102, 155, 0.15);
 }
 
 #gameCanvas {
@@ -243,8 +328,8 @@ body {
   font-size: 1.1rem;
   color: #ffffff;
   text-shadow:
-    0 2px 4px rgba(10, 82, 130, 0.7),
-    0 0 8px rgba(90, 215, 255, 0.9);
+    0 2px 4px rgba(150, 32, 95, 0.72),
+    0 0 8px rgba(255, 128, 195, 0.95);
   transform: translate(-50%, -50%);
   animation: scoreRise 0.85s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
   will-change: transform, opacity;
@@ -267,8 +352,8 @@ body {
 .glass-card {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(232, 248, 255, 0.82) 100%
+    rgba(255, 255, 255, 0.93) 0%,
+    rgba(236, 249, 255, 0.84) 100%
   );
   border: 1.5px solid rgba(255, 255, 255, 0.96);
   border-radius: 14px;
@@ -305,7 +390,6 @@ body {
   color: #0e4466;
 }
 
-/* Шкала комбо */
 .progress-track {
   width: 100%;
   height: 11px;
@@ -321,7 +405,7 @@ body {
   width: 0%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #7ef224 0%, #37d4ff 100%);
+  background: linear-gradient(90deg, #ff7eb9 0%, #7ef224 55%, #37d4ff 100%);
   box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.7);
   transition: width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -348,7 +432,6 @@ body {
   will-change: transform;
 }
 
-/* Верхний стеклянный блик на кнопке */
 .jelly-btn::before {
   content: '';
   position: absolute;
@@ -458,15 +541,16 @@ body {
     align-items: flex-start;
   }
 
-  /* Убираем тяжёлый blur на мобильных GPU */
   .aero-window {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(212, 243, 255, 0.92);
+    background: rgba(220, 245, 255, 0.93);
     border-radius: 14px;
   }
 
-  .bg-bubble {
+  /* На телефонах оставляем только лёгкие облака и лучи, убираем лишние слои */
+  .bg-orb,
+  .bg-candy {
     display: none;
   }
 
@@ -475,7 +559,7 @@ body {
   }
 
   .window-title h1 {
-    font-size: 1.02rem;
+    font-size: 1rem;
   }
 
   .mode-pill,
